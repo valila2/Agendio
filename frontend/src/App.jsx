@@ -8,6 +8,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import Home from "./pages/Home";
+import Eventos from "./pages/Eventos.jsx";
 
 function App() {
   return (
@@ -16,7 +17,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
 
-        <Route path="/home" element={<Home/>} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/eventos" element={<Eventos />} />
       </Routes>
     </BrowserRouter>
   );
