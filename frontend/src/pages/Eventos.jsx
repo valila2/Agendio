@@ -9,8 +9,12 @@ import {
 } from "../services/eventosServices";
 import Navbar from "../components/shared/Navbar";
 import { toast } from "react-toastify";
+import ModalVerEvento from "../components/eventos/ModalVerEvento";
+import ModalAsignarTrabajador from "../components/eventos/ModalAsignarTrabajador";
+import { useNavigate } from "react-router-dom";
 
 const Eventos = () => {
+  const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
@@ -28,6 +32,72 @@ const Eventos = () => {
   });
   const [editing, setEditing] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
+  const [trabajadoresDisponibles, setTrabajadoresDisponibles] = useState([]);
+  const [trabajadoresSeleccionados, setTrabajadoresSeleccionados] = useState(
+    []
+  );
+
+  const obtenerTrabajadores = async () => {
+    try {
+      const trabajadoresSimulados = [
+        { _id: "1", nombre: "Juan Pérez" },
+        { _id: "2", nombre: "Ana Gómez" },
+        { _id: "3", nombre: "Carlos Torres" },
+      ];
+      setTrabajadoresDisponibles(trabajadoresSimulados);
+    } catch (error) {
+      console.error("Error al cargar trabajadores:", error);
+    }
+  };
+
+  const abrirModalAsignar = (evento) => {
+    setEventoSeleccionado(evento);
+    setTrabajadoresSeleccionados([]);
+    obtenerTrabajadores();
+    const modal = new bootstrap.Modal(
+      document.getElementById("modalAsignarTrabajador")
+    );
+    modal.show();
+  };
+
+  const handleSeleccionTrabajador = (e) => {
+    const id = e.target.value;
+    if (e.target.checked) {
+      setTrabajadoresSeleccionados((prev) => [...prev, id]);
+    } else {
+      setTrabajadoresSeleccionados((prev) => prev.filter((t) => t !== id));
+    }
+  };
+
+  const handleAsignarTrabajadores = async () => {
+    try {
+      if (trabajadoresSeleccionados.length === 0) {
+        toast.warning("Debes seleccionar al menos un trabajador");
+        return;
+      }
+
+      await fetch(`http://localhost:4000/api/trabajadores/asignar-evento`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventoId: eventoSeleccionado.id,
+          trabajadores: trabajadoresSeleccionados,
+        }),
+      });
+
+      toast.success("Trabajadores asignados correctamente");
+      cargarEventos();
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("modalAsignarTrabajador")
+      );
+      modal.hide();
+    } catch (error) {
+      console.error("Error al asignar trabajadores:", error);
+      toast.error("Ocurrió un error al asignar");
+    }
+  };
 
   const cargarEventos = async (pagina = 1) => {
     try {
@@ -38,7 +108,6 @@ const Eventos = () => {
       }));
       setEventos(eventosFormateados);
       setTotalPaginas(data.totalPages);
-      console.log("fecha:", fechaFiltro);
       setTotalEventos(data.totalEventos); // Asegúrate de que el backend lo devuelva
     } catch (error) {
       console.error("Error al cargar eventos:", error);
@@ -125,11 +194,20 @@ const Eventos = () => {
 
   const handleView = (evento) => {
     setEventoSeleccionado(evento);
-    const modal = new bootstrap.Modal(
-      document.getElementById("modalVerEvento")
-    );
-    modal.show();
+    
   };
+  useEffect(() => {
+  if (eventoSeleccionado) {
+    const modalElement = document.getElementById("modalVerEvento");
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement, {
+        backdrop: "static",
+      });
+      modal.show();
+    }
+  }
+}, [eventoSeleccionado]);
+
   const formatearFecha = (fecha) => {
     const [anio, mes, dia] = fecha.split("T")[0].split("-");
     const fechaLegible = new Date(`${anio}-${mes}-${dia}T00:00:00`);
@@ -239,6 +317,12 @@ const Eventos = () => {
                       Editar
                     </button>
                     <button
+                      className="btn btn-sm btn-secondary me-2"
+                      onClick={() => abrirModalAsignar(ev)}
+                    >
+                      Trabajador(es)
+                    </button>
+                    <button
                       className="btn btn-sm btn-danger"
                       onClick={() => handleDelete(ev.id)}
                     >
@@ -260,72 +344,21 @@ const Eventos = () => {
           setEditing={setEditing}
           setForm={setForm}
         />
+        {/* Modal para asignar trabajadores */}
+        <ModalAsignarTrabajador
+          eventoSeleccionado={eventoSeleccionado}
+          trabajadoresDisponibles={trabajadoresDisponibles}
+          trabajadoresSeleccionados={trabajadoresSeleccionados}
+          handleSeleccionTrabajador={handleSeleccionTrabajador}
+          handleAsignarTrabajadores={handleAsignarTrabajadores}
+        />
 
         {/* Modal para Ver Detalle */}
-        <div
-          className="modal fade"
-          id="modalVerEvento"
-          tabIndex="-1"
-          aria-labelledby="modalVerEventoLabel"
-          aria-hidden="true"
-        >
-          <div className="modal-dialog modal-lg">
-            <div className="modal-content">
-              {eventoSeleccionado && (
-                <>
-                  <div className="modal-header bg-primary text-white">
-                    <h5 className="modal-title" id="modalVerEventoLabel">
-                      Detalle del Evento
-                    </h5>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Cerrar"
-                    ></button>
-                  </div>
-                  <div className="modal-body">
-                    <div className="row">
-                      <div className="col-md-6 mb-3">
-                        <strong>Nombre:</strong>
-                        <p>{eventoSeleccionado.nombre}</p>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <strong>Fecha:</strong>
-                        <p>{formatearFecha(eventoSeleccionado.fecha)}</p>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <strong>Lugar:</strong>
-                        <p>{eventoSeleccionado.lugar}</p>
-                      </div>
-                      <div className="col-md-6 mb-3">
-                        <strong>Valor:</strong>
-                        <p>
-                          {eventoSeleccionado.valor.toLocaleString("es-CO", {
-                            style: "currency",
-                            currency: "COP",
-                          })}
-                        </p>
-                      </div>
-                      <div className="col-12 mb-3">
-                        <strong>Descripción:</strong>
-                        <p>{eventoSeleccionado.descripcion}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="modal-footer">
-                    <button
-                      className="btn btn-secondary"
-                      data-bs-dismiss="modal"
-                    >
-                      Cerrar
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <ModalVerEvento
+          eventoSeleccionado={eventoSeleccionado}
+          formatearFecha={formatearFecha}
+        />
+
         {totalPaginas > 1 && (
           <div className="d-flex justify-content-between align-items-center mt-3">
             <nav>
@@ -420,5 +453,4 @@ const Eventos = () => {
     </div>
   );
 };
-
 export default Eventos;

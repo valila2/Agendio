@@ -1,6 +1,3 @@
-// ModalEvento.jsx
-import React from 'react';
-
 const ModalEvento = ({ form, handleChange, handleSubmit, editing, setEditing, setForm }) => {
   const limpiarFormulario = () => {
     setForm({ id: null, nombre: '', fecha: '', lugar: '', descripcion: '', valor: '' });
