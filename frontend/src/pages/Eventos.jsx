@@ -200,9 +200,14 @@ const Eventos = () => {
     }
   };
 
-  const handleView = (evento) => {
+const handleView = (evento) => {
+  // Forzar re-render aunque sea el mismo evento
+  setEventoParaVer(null);
+  setTimeout(() => {
     setEventoParaVer(evento);
-  };
+  }, 0);
+};
+
 
   useEffect(() => {
     if (eventoParaVer) {
