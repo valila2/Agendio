@@ -27,18 +27,17 @@ export const obtenerEventos = async (req, res) => {
     const filtro = {};
 
     if (fecha) {
-  const fechaInicio = new Date(fecha);
-  fechaInicio.setHours(0, 0, 0, 0); // Inicio del día
+      const fechaInicio = new Date(fecha);
+      fechaInicio.setHours(0, 0, 0, 0);
 
-  const fechaFin = new Date(fecha);
-  fechaFin.setHours(23, 59, 59, 999); // Fin del día
+      const fechaFin = new Date(fecha);
+      fechaFin.setHours(23, 59, 59, 999);
 
-  filtro.fecha = {
-    $gte: fechaInicio,
-    $lte: fechaFin
-  };
-}
-
+      filtro.fecha = {
+        $gte: fechaInicio,
+        $lte: fechaFin
+      };
+    }
 
     const total = await Evento.countDocuments(filtro);
 
@@ -57,9 +56,9 @@ export const obtenerEventos = async (req, res) => {
       },
       {
         $lookup: {
-          from: 'trabajadores',
-          localField: '_id',
-          foreignField: 'evento',
+          from: 'usuarios', // aquí cambia 'trabajadores' por 'usuarios'
+          localField: 'trabajadores',
+          foreignField: '_id',
           as: 'trabajadores'
         }
       }
@@ -74,6 +73,7 @@ export const obtenerEventos = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al obtener eventos', error });
   }
 };
+
 
 
 

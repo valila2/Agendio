@@ -12,6 +12,11 @@ import { toast } from "react-toastify";
 import ModalVerEvento from "../components/eventos/ModalVerEvento";
 import ModalAsignarTrabajador from "../components/eventos/ModalAsignarTrabajador";
 import { useNavigate } from "react-router-dom";
+import ModalConfirmacion from "../components/shared/ModalConfirmacion";
+import {
+  obtenerTrabajadores as fetchTrabajadores,
+  asignarTrabajadorEvento,
+} from "../services/trabajadorServices";
 
 const Eventos = () => {
   const navigate = useNavigate();
@@ -36,24 +41,24 @@ const Eventos = () => {
   const [trabajadoresSeleccionados, setTrabajadoresSeleccionados] = useState(
     []
   );
+  const [idAEliminar, setIdAEliminar] = useState(null);
+  const [eventoParaVer, setEventoParaVer] = useState(null);
+  const [eventoParaAsignar, setEventoParaAsignar] = useState(null);
 
   const obtenerTrabajadores = async () => {
     try {
-      const trabajadoresSimulados = [
-        { _id: "1", nombre: "Juan Pérez" },
-        { _id: "2", nombre: "Ana Gómez" },
-        { _id: "3", nombre: "Carlos Torres" },
-      ];
-      setTrabajadoresDisponibles(trabajadoresSimulados);
+      const res = await fetchTrabajadores({ page: 1, limit: 1000 });
+      setTrabajadoresDisponibles(res.trabajadores || []);
     } catch (error) {
       console.error("Error al cargar trabajadores:", error);
     }
   };
 
   const abrirModalAsignar = (evento) => {
-    setEventoSeleccionado(evento);
-    setTrabajadoresSeleccionados([]);
+    setEventoParaAsignar(evento);
+    setTrabajadoresSeleccionados(evento.trabajadores?.map((t) => t._id) || []);
     obtenerTrabajadores();
+
     const modal = new bootstrap.Modal(
       document.getElementById("modalAsignarTrabajador")
     );
@@ -76,16 +81,10 @@ const Eventos = () => {
         return;
       }
 
-      await fetch(`http://localhost:4000/api/trabajadores/asignar-evento`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          eventoId: eventoSeleccionado.id,
-          trabajadores: trabajadoresSeleccionados,
-        }),
-      });
+      await asignarTrabajadorEvento(
+        eventoSeleccionado._id,
+        trabajadoresSeleccionados
+      );
 
       toast.success("Trabajadores asignados correctamente");
       cargarEventos();
@@ -181,32 +180,41 @@ const Eventos = () => {
     modal.show();
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("¿Estás seguro de eliminar este evento?")) return;
+  const confirmarEliminacion = (id) => {
+    setIdAEliminar(id);
+    const modal = new bootstrap.Modal(
+      document.getElementById("modalConfirmacionEliminar")
+    );
+    modal.show();
+  };
 
+  const eliminarEventoConfirmado = async () => {
     try {
-      await eliminarEvento(id);
+      await eliminarEvento(idAEliminar);
+      toast.success("Evento eliminado correctamente");
       cargarEventos();
+      setIdAEliminar(null);
     } catch (error) {
       console.error("Error al eliminar evento:", error);
+      toast.error("No se pudo eliminar el evento");
     }
   };
 
   const handleView = (evento) => {
-    setEventoSeleccionado(evento);
-    
+    setEventoParaVer(evento);
   };
+
   useEffect(() => {
-  if (eventoSeleccionado) {
-    const modalElement = document.getElementById("modalVerEvento");
-    if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement, {
-        backdrop: "static",
-      });
-      modal.show();
+    if (eventoParaVer) {
+      const modalElement = document.getElementById("modalVerEvento");
+      if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement, {
+          backdrop: "static",
+        });
+        modal.show();
+      }
     }
-  }
-}, [eventoSeleccionado]);
+  }, [eventoParaVer]);
 
   const formatearFecha = (fecha) => {
     const [anio, mes, dia] = fecha.split("T")[0].split("-");
@@ -324,7 +332,7 @@ const Eventos = () => {
                     </button>
                     <button
                       className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(ev.id)}
+                      onClick={() => confirmarEliminacion(ev.id)}
                     >
                       Eliminar
                     </button>
@@ -344,19 +352,24 @@ const Eventos = () => {
           setEditing={setEditing}
           setForm={setForm}
         />
-        {/* Modal para asignar trabajadores */}
+        <ModalVerEvento
+          eventoSeleccionado={eventoParaVer}
+          formatearFecha={formatearFecha}
+        />
+
         <ModalAsignarTrabajador
-          eventoSeleccionado={eventoSeleccionado}
+          eventoSeleccionado={eventoParaAsignar}
           trabajadoresDisponibles={trabajadoresDisponibles}
           trabajadoresSeleccionados={trabajadoresSeleccionados}
           handleSeleccionTrabajador={handleSeleccionTrabajador}
           handleAsignarTrabajadores={handleAsignarTrabajadores}
         />
 
-        {/* Modal para Ver Detalle */}
-        <ModalVerEvento
-          eventoSeleccionado={eventoSeleccionado}
-          formatearFecha={formatearFecha}
+        <ModalConfirmacion
+          titulo="Confirmar eliminación"
+          mensaje="¿Estás seguro de que deseas eliminar este evento?"
+          onConfirmar={eliminarEventoConfirmado}
+          idModal="modalConfirmacionEliminar"
         />
 
         {totalPaginas > 1 && (

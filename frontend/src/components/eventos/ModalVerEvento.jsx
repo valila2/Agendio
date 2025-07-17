@@ -16,7 +16,7 @@ const ModalVerEvento = ({ eventoSeleccionado, formatearFecha }) => {
     >
       <div className="modal-dialog">
         <div className="modal-content">
-          <div className="modal-header bg-info text-white">
+          <div className="modal-header bg-primary text-white">
             <h5 className="modal-title" id="modalVerEventoLabel">
               Detalles del Evento
             </h5>
@@ -32,7 +32,7 @@ const ModalVerEvento = ({ eventoSeleccionado, formatearFecha }) => {
               <strong>Nombre:</strong> {eventoSeleccionado.nombre}
             </p>
             <p>
-              <strong>Fecha:</strong> {formatearFecha(eventoSeleccionado.fecha)}
+              <strong>Fecha inicio evento:</strong> {formatearFecha(eventoSeleccionado.fecha)}
             </p>
             <p>
               <strong>Lugar:</strong> {eventoSeleccionado.lugar}
@@ -46,6 +46,9 @@ const ModalVerEvento = ({ eventoSeleccionado, formatearFecha }) => {
                 style: "currency",
                 currency: "COP",
               })}
+            </p>
+            <p>
+              <strong>Fecha creacion:</strong> {formatearFecha(eventoSeleccionado.createdAt)}
             </p>
             <div className="mt-3">
               <h6 className="fw-bold">Trabajadores asignados:</h6>
