@@ -81,10 +81,8 @@ const Eventos = () => {
         return;
       }
 
-      await asignarTrabajadorEvento(
-        eventoSeleccionado._id,
-        trabajadoresSeleccionados
-      );
+      await asignarTrabajadorEvento(eventoParaAsignar._id, trabajadoresSeleccionados);
+
 
       toast.success("Trabajadores asignados correctamente");
       cargarEventos();
