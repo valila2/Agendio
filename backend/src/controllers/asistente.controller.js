@@ -55,6 +55,7 @@ export const obtenerAsistentes = async (req, res) => {
     const filtro = eventoId ? { evento: eventoId } : {};
 
     const asistentes = await Asistente.find(filtro)
+      .sort({ createdAt: -1 }) // Orden descendente por fecha de creación
       .populate({
         path: "evento",
         select: "nombre lugar fecha valor descripcion",
@@ -75,48 +76,64 @@ export const obtenerAsistentes = async (req, res) => {
   }
 };
 
-// Actualizar un asistente
-export const actualizarAsistente = async (req, res) => {
+
+
+// Eliminar un asistente por id y id evento
+export const eliminarAsistenteDeEvento = async (req, res) => {
   try {
-    const asistenteActualizado = await Asistente.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.json(asistenteActualizado);
+    const { asistenteId, eventoId } = req.query;
+
+    if (!asistenteId || !eventoId) {
+      return res.status(400).json({ mensaje: "Faltan parámetros: asistenteId o eventoId" });
+    }
+
+    // Validar que el asistente pertenece al evento
+    const asistente = await Asistente.findOne({ _id: asistenteId, evento: eventoId });
+
+    if (!asistente) {
+      return res.status(404).json({ mensaje: "No se encontró un asistente con ese ID para el evento especificado" });
+    }
+
+    // Eliminar al asistente
+    await Asistente.findByIdAndDelete(asistenteId);
+
+    res.json({ mensaje: "Asistente eliminado correctamente del evento" });
   } catch (error) {
-    res.status(400).json({ mensaje: "Error al actualizar asistente", error });
+    console.error("Error al eliminar asistente:", error);
+    res.status(500).json({ mensaje: "Error al eliminar asistente", error });
   }
 };
 
-// Eliminar un asistente
-export const eliminarAsistente = async (req, res) => {
+export const registrarPagoAsistente = async (req, res) => {
   try {
-    await Asistente.findByIdAndDelete(req.params.id);
-    res.json({ mensaje: "Asistente eliminado correctamente" });
-  } catch (error) {
-    res.status(400).json({ mensaje: "Error al eliminar asistente", error });
-  }
-};
-
-//registra pago asistente
-export const registrarPago = async (req, res) => {
-  try {
-    const { idAsistente } = req.params;
+    const { asistenteId, eventoId } = req.params;
     const { valor, recibidoPor } = req.body;
 
-    const asistente = await Asistente.findById(idAsistente);
-    if (!asistente)
-      return res.status(404).json({ mensaje: "Asistente no encontrado" });
+    if (!valor || !recibidoPor) {
+      return res
+        .status(400)
+        .json({ mensaje: "Faltan datos del pago: valor o recibidoPor" });
+    }
 
+    // Verifica que el asistente existe y pertenece al evento
+    const asistente = await Asistente.findOne({ _id: asistenteId, evento: eventoId });
+
+    if (!asistente) {
+      return res.status(404).json({ mensaje: "Asistente no encontrado para ese evento" });
+    }
+
+    // Agrega el nuevo pago
     asistente.pagos.push({ valor, recibidoPor });
     await asistente.save();
 
-    res.json({ mensaje: "Pago registrado correctamente", asistente });
+    res.status(200).json({ mensaje: "Pago registrado correctamente", asistente });
   } catch (error) {
+    console.error("Error al registrar pago:", error);
     res.status(500).json({ mensaje: "Error al registrar el pago", error });
   }
 };
+
+
 
 export const obtenerAsistentePorId = async (req, res) => {
   try {
@@ -146,6 +163,7 @@ export const obtenerAsistentePorId = async (req, res) => {
     res.status(500).json({ mensaje: "Error al obtener asistente", error });
   }
 };
+
 export const obtenerAsistentePorEventoYId = async (req, res) => {
   try {
     const { eventoId, asistenteId } = req.query;
@@ -175,10 +193,14 @@ export const obtenerAsistentePorEventoYId = async (req, res) => {
       return res.status(404).json({ mensaje: "Asistente no encontrado con ese ID y evento" });
     }
 
+    // 🔽 Ordenar pagos por fecha descendente
+    asistente.pagos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
     res.json(asistente);
   } catch (error) {
     console.error("Error al obtener el asistente:", error);
     res.status(500).json({ mensaje: "Error al obtener asistente", error });
   }
 };
+
 

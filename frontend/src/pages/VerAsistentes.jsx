@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import * as bootstrap from "bootstrap";
 import Navbar from "../components/shared/Navbar";
 import {
   crearAsistente,
   obtenerAsistentes,
+  eliminarAsistente,
 } from "../services/asistenteServices";
+import { toast } from "react-toastify";
 import RegistrarAsistenteModal from "../components/asistentes/RegistrarAsistenteModal";
 import VerAsistenteModal from "../components/asistentes/VerAsistenteModal";
+import ModalConfirmacion from "../components/shared/ModalConfirmacion";
+import ModalPagoAsistente from "../components/asistentes/ModalPagoAsistente";
 
 const VerAsistentes = () => {
   const { eventoId } = useParams();
@@ -17,6 +22,9 @@ const VerAsistentes = () => {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [asistenteSeleccionadoId, setAsistenteSeleccionadoId] = useState(null);
   const [mostrarVerModal, setMostrarVerModal] = useState(false);
+  const [idAEliminar, setIdAEliminar] = useState(null);
+  const [mostrarModalPago, setMostrarModalPago] = useState(false);
+  const [asistentePagoId, setAsistentePagoId] = useState(null);
 
   const obtenerAsistentesEvento = async () => {
     try {
@@ -54,6 +62,26 @@ const VerAsistentes = () => {
     }
   };
 
+  const confirmarEliminacion = (id) => {
+    setIdAEliminar(id);
+    const modal = new bootstrap.Modal(
+      document.getElementById("modalConfirmacionEliminar")
+    );
+    modal.show();
+  };
+
+  const eliminarAsistenteConfirmado = async () => {
+    try {
+      await eliminarAsistente(idAEliminar, eventoId);
+      toast.success("Asistente eliminado correctamente");
+      obtenerAsistentesEvento(); // Refresca la tabla
+      setIdAEliminar(null);
+    } catch (error) {
+      console.error("Error al eliminar asistente:", error);
+      toast.error("No se pudo eliminar el asistente");
+    }
+  };
+
   const handleRegistrarAsistente = async (nuevoAsistente) => {
     try {
       const usuario = JSON.parse(localStorage.getItem("usuario"));
@@ -76,6 +104,23 @@ const VerAsistentes = () => {
     } catch (error) {
       console.error("Error al registrar asistente:", error);
       alert(error.response?.data?.mensaje || "Error al registrar asistente");
+    }
+  };
+
+  const handleEliminarAsistente = async (asistenteId) => {
+    const confirmar = window.confirm(
+      "¿Estás seguro de que deseas eliminar este asistente?"
+    );
+    if (!confirmar) return;
+
+    try {
+      await eliminarAsistente(asistenteId, eventoId);
+      alert("Asistente eliminado correctamente");
+      obtenerAsistentesEvento(); // Refresca la lista
+    } catch (error) {
+      alert(
+        "Error al eliminar asistente: " + (error.response?.data?.mensaje || "")
+      );
     }
   };
 
@@ -140,13 +185,28 @@ const VerAsistentes = () => {
                   >
                     Ver
                   </button>
-                  <button className="btn btn-warning btn-sm me-1">
-                    Editar
+                  <button
+                    className="btn btn-success btn-sm me-1"
+                    onClick={() => {
+                      setAsistentePagoId(a.id);
+                      setMostrarModalPago(true);
+                    }}
+                    disabled={a.estado === "Pagado"}
+                    title={
+                      a.estado === "Pagado"
+                        ? "Este asistente ya pagó completamente"
+                        : ""
+                    }
+                  >
+                    Pago
                   </button>
-                  <button className="btn btn-danger btn-sm me-1">
+
+                  <button
+                    className="btn btn-danger btn-sm me-1"
+                    onClick={() => confirmarEliminacion(a.id)}
+                  >
                     Eliminar
                   </button>
-                  <button className="btn btn-success btn-sm">Pago</button>
                 </td>
               </tr>
             ))}
@@ -169,6 +229,23 @@ const VerAsistentes = () => {
         show={mostrarModal}
         onClose={() => setMostrarModal(false)}
         onSubmit={handleRegistrarAsistente}
+      />
+
+      <ModalConfirmacion
+        titulo="Confirmar eliminación"
+        mensaje="¿Estás seguro que deseas eliminar este asistente?"
+        onConfirmar={eliminarAsistenteConfirmado}
+        idModal="modalConfirmacionEliminar"
+      />
+      <ModalPagoAsistente
+        eventoId={eventoId}
+        asistenteId={asistentePagoId}
+        show={mostrarModalPago}
+        onClose={() => {
+          setMostrarModalPago(false);
+          setAsistentePagoId(null);
+        }}
+        onPagoRealizado={obtenerAsistentesEvento}
       />
     </div>
   );
