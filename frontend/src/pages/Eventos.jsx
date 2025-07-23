@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ModalEvento from "../components/eventos/EventoModal";
 import * as bootstrap from "bootstrap";
+import { FaArrowLeft } from "react-icons/fa";
+
 import {
   obtenerEventos,
   crearEvento,
@@ -81,8 +83,10 @@ const Eventos = () => {
         return;
       }
 
-      await asignarTrabajadorEvento(eventoParaAsignar._id, trabajadoresSeleccionados);
-
+      await asignarTrabajadorEvento(
+        eventoParaAsignar._id,
+        trabajadoresSeleccionados
+      );
 
       toast.success("Trabajadores asignados correctamente");
       cargarEventos();
@@ -198,14 +202,13 @@ const Eventos = () => {
     }
   };
 
-const handleView = (evento) => {
-  // Forzar re-render aunque sea el mismo evento
-  setEventoParaVer(null);
-  setTimeout(() => {
-    setEventoParaVer(evento);
-  }, 0);
-};
-
+  const handleView = (evento) => {
+    // Forzar re-render aunque sea el mismo evento
+    setEventoParaVer(null);
+    setTimeout(() => {
+      setEventoParaVer(evento);
+    }, 0);
+  };
 
   useEffect(() => {
     if (eventoParaVer) {
@@ -465,6 +468,14 @@ const handleView = (evento) => {
             </p>
           </div>
         )}
+      </div>
+      <div className="container mt-4">
+        <button
+          className="btn btn-link text-decoration-none"
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft className="fs-1" />
+        </button>
       </div>
     </div>
   );

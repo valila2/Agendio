@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/shared/Navbar";
+import { useNavigate } from "react-router-dom";
 import ModalRegistrarTrabajador from "../components/trabajadores/ModalRegistrarTrabajador";
 import ModalVerTrabajador from "../components/trabajadores/ModalVerTrabajador";
 import * as bootstrap from "bootstrap";
@@ -10,6 +11,8 @@ import {
   eliminarTrabajador,
 } from "../services/trabajadorServices";
 import { toast } from "react-toastify";
+import { FaArrowLeft } from "react-icons/fa";
+
 import ModalConfirmacion from "../components/shared/ModalConfirmacion";
 
 function Trabajadores() {
@@ -21,6 +24,7 @@ function Trabajadores() {
   const [trabajadorSeleccionado, setTrabajadorSeleccionado] = useState(null);
   const [modoFormulario, setModoFormulario] = useState("crear"); // "crear" o "editar"
   const [idEditando, setIdEditando] = useState(null);
+  const navigate = useNavigate();
 
   const [nuevoTrabajador, setNuevoTrabajador] = useState({
     nombre: "",
@@ -178,25 +182,26 @@ function Trabajadores() {
 
         <div className="d-flex align-items-end justify-content-end">
           <button
-  className="btn btn-success mb-3"
-  onClick={() => {
-    setModoFormulario("crear");
-    setNuevoTrabajador({
-      nombre: "",
-      rol: "trabajador",
-      correo: "",
-      contrasena: "",
-    });
-    setIdEditando(null);
+            className="btn btn-success mb-3"
+            onClick={() => {
+              setModoFormulario("crear");
+              setNuevoTrabajador({
+                nombre: "",
+                rol: "trabajador",
+                correo: "",
+                contrasena: "",
+              });
+              setIdEditando(null);
 
-    const modalElement = document.getElementById("modalRegistrarTrabajador");
-    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
-    modal.show();
-  }}
->
-  Registrar
-</button>
-
+              const modalElement = document.getElementById(
+                "modalRegistrarTrabajador"
+              );
+              const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+              modal.show();
+            }}
+          >
+            Registrar
+          </button>
         </div>
 
         <ModalRegistrarTrabajador
@@ -314,6 +319,14 @@ function Trabajadores() {
       </div>
 
       <ModalVerTrabajador trabajador={trabajadorSeleccionado} />
+      <div className="container mt-4">
+        <button
+          className="btn btn-link text-decoration-none"
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft className="fs-1" /> 
+        </button>
+      </div>
     </div>
   );
 }
