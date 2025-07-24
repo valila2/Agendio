@@ -18,15 +18,20 @@ export const crearAsistente = async (asistente) => {
   }
 };
 
-export const obtenerAsistentes = async (eventoId) => {
+export const obtenerAsistentes = async ({ eventoId, nombre = "", page = 1, limit = 10 }) => {
   try {
     const response = await axios.get(`${API_URL}/asistente`, {
-      params: { eventoId },
+      params: {
+        eventoId,
+        nombre,
+        page,
+        limit,
+      },
       headers: {
         Authorization: `Bearer ${getToken()}`,
       },
     });
-    console.log("respuesta: ", response.data);
+    console.log("respuesta:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error al obtener asistentes:", error);

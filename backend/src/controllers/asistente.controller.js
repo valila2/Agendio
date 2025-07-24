@@ -35,27 +35,83 @@ export const crearAsistente = async (req, res) => {
   }
 };
 
-// Obtener todos los asistentes
+
+
 // export const obtenerAsistentes = async (req, res) => {
 //   try {
-//     const asistentes = await Asistente.find()
-//       .populate("evento")
-//       .populate("registradoPor", "nombre correo") // trae nombre y correo del trabajador que registró
-//       .populate("pagos.recibidoPor", "nombre correo"); // trae nombre y correo del trabajador que recibió cada pago
+//     const { eventoId, nombre, page = 1, limit = 10 } = req.query;
 
-//     res.json(asistentes);
+//     const filtro = {};
+
+//     if (eventoId) {
+//       filtro.evento = eventoId;
+//     }
+
+//     if (nombre) {
+//       filtro.nombre = { $regex: nombre, $options: "i" };
+//     }
+
+//     //} Convertimos page y limit a números
+//     const pageNumber = parseInt(page);
+//     const limitNumber = parseInt(limit);
+
+//     const asistentes = await Asistente.find(filtro)
+//       .sort({ createdAt: -1 })
+//       .skip((pageNumber - 1) * limitNumber)
+//       .limit(limitNumber)
+//       .populate({
+//         path: "evento",
+//         select: "nombre lugar fecha valor descripcion",
+//       })
+//       .populate({
+//         path: "registradoPor",
+//         select: "nombre correo",
+//       })
+//       .populate({
+//         path: "pagos.recibidoPor",
+//         select: "nombre correo",
+//       });
+
+//     const total = await Asistente.countDocuments(filtro);
+
+//     res.json({
+//       total,
+//       page: pageNumber,
+//       totalPages: Math.ceil(total / limitNumber),
+//       asistentes,
+//     });
 //   } catch (error) {
+//     console.error("Error al obtener asistentes:", error);
 //     res.status(500).json({ mensaje: "Error al obtener los asistentes", error });
 //   }
 // };
+
+
+
+
+// Eliminar un asistente por id y id evento
 export const obtenerAsistentes = async (req, res) => {
   try {
-    const { eventoId } = req.query;
+    const { eventoId, nombre, page = 1, limit = 10 } = req.query;
 
-    const filtro = eventoId ? { evento: eventoId } : {};
+    const filtro = {};
+
+    if (eventoId) {
+      filtro.evento = eventoId;
+    }
+
+    if (nombre) {
+      filtro.nombre = { $regex: nombre, $options: "i" };
+    }
+
+    //} Convertimos page y limit a números
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
 
     const asistentes = await Asistente.find(filtro)
-      .sort({ createdAt: -1 }) // Orden descendente por fecha de creación
+      .sort({ createdAt: -1 })
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber)
       .populate({
         path: "evento",
         select: "nombre lugar fecha valor descripcion",
@@ -69,7 +125,14 @@ export const obtenerAsistentes = async (req, res) => {
         select: "nombre correo",
       });
 
-    res.json(asistentes);
+    const total = await Asistente.countDocuments(filtro);
+
+    res.json({
+      total,
+      page: pageNumber,
+      totalPages: Math.ceil(total / limitNumber),
+      asistentes,
+    });
   } catch (error) {
     console.error("Error al obtener asistentes:", error);
     res.status(500).json({ mensaje: "Error al obtener los asistentes", error });
@@ -77,8 +140,6 @@ export const obtenerAsistentes = async (req, res) => {
 };
 
 
-
-// Eliminar un asistente por id y id evento
 export const eliminarAsistenteDeEvento = async (req, res) => {
   try {
     const { asistenteId, eventoId } = req.query;

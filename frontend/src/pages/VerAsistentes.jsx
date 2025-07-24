@@ -25,16 +25,31 @@ const VerAsistentes = () => {
   const [idAEliminar, setIdAEliminar] = useState(null);
   const [mostrarModalPago, setMostrarModalPago] = useState(false);
   const [asistentePagoId, setAsistentePagoId] = useState(null);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [totalAsistentes, setTotalAsistentes] = useState(0);
+  const LIMITE_POR_PAGINA = 5;
+  const [limitePorPagina, setLimitePorPagina] = useState(5);
+
 
   const obtenerAsistentesEvento = async () => {
     try {
-      const data = await obtenerAsistentes(eventoId);
+      const data = await obtenerAsistentes({
+        eventoId,
+        nombre: busqueda,
+        page: pagina,
+        limit: limitePorPagina,
+      });
 
-      if (data.length > 0) {
-        const evento = data[0].evento;
+      const { asistentes: lista, total, totalPages } = data;
+
+      setTotalPaginas(totalPages);
+      setTotalAsistentes(total);
+
+      if (lista.length > 0) {
+        const evento = lista[0].evento;
         setNombreEvento(evento?.nombre || "");
 
-        const asistentesFormateados = data.map((a) => {
+        const asistentesFormateados = lista.map((a) => {
           const totalAbonos =
             a.pagos?.reduce((acc, pago) => acc + pago.valor, 0) || 0;
           const valor = evento?.valor || 0;
@@ -107,26 +122,10 @@ const VerAsistentes = () => {
     }
   };
 
-  const handleEliminarAsistente = async (asistenteId) => {
-    const confirmar = window.confirm(
-      "¿Estás seguro de que deseas eliminar este asistente?"
-    );
-    if (!confirmar) return;
+ useEffect(() => {
+  obtenerAsistentesEvento();
+}, [eventoId, pagina, busqueda, limitePorPagina]);
 
-    try {
-      await eliminarAsistente(asistenteId, eventoId);
-      alert("Asistente eliminado correctamente");
-      obtenerAsistentesEvento(); // Refresca la lista
-    } catch (error) {
-      alert(
-        "Error al eliminar asistente: " + (error.response?.data?.mensaje || "")
-      );
-    }
-  };
-
-  useEffect(() => {
-    obtenerAsistentesEvento();
-  }, [eventoId]);
 
   return (
     <div className="fondo">
@@ -134,25 +133,47 @@ const VerAsistentes = () => {
       <div className="container mt-4">
         <h4>ASISTENTES - Evento {nombreEvento}</h4>
 
-        <div className="row my-3">
-          <div className="col-md-6">
-            <label>Consulta por nombre:</label>
-            <input
-              type="text"
-              className="form-control"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-          </div>
-          <div className="col-md-6 d-flex align-items-end justify-content-end">
-            <button
-              className="btn btn-success"
-              onClick={() => setMostrarModal(true)}
-            >
-              Registrar
-            </button>
-          </div>
-        </div>
+        <div className="row mb-3">
+  <div className="col-md-6">
+    <label>Consulta por nombre:</label>
+    <input
+      type="text"
+      className="form-control"
+      value={busqueda}
+      onChange={(e) => {
+        setBusqueda(e.target.value);
+        setPagina(1); // reiniciar paginación
+      }}
+    />
+  </div>
+
+  <div className="col-md-3">
+    <label>Asistentes por página:</label>
+    <select
+      className="form-select"
+      value={limitePorPagina}
+      onChange={(e) => {
+        setLimitePorPagina(parseInt(e.target.value));
+        setPagina(1); // reinicia la página al cambiar el límite
+      }}
+    >
+      <option value={5}>5</option>
+      <option value={10}>10</option>
+      <option value={20}>20</option>
+      <option value={50}>50</option>
+    </select>
+  </div>
+
+  <div className="col-md-3 d-flex align-items-end justify-content-end">
+    <button
+      className="btn btn-success"
+      onClick={() => setMostrarModal(true)}
+    >
+      Registrar
+    </button>
+  </div>
+</div>
+
 
         <table className="table table-bordered table-hover">
           <thead className="table-primary">
@@ -212,6 +233,50 @@ const VerAsistentes = () => {
             ))}
           </tbody>
         </table>
+        <nav className="d-flex justify-content-between align-items-center mt-3">
+  <ul className="pagination mb-0">
+    <li className={`page-item ${pagina === 1 ? "disabled" : ""}`}>
+      <button className="page-link" onClick={() => setPagina(1)}>
+        Inicio
+      </button>
+    </li>
+    <li className={`page-item ${pagina === 1 ? "disabled" : ""}`}>
+      <button className="page-link" onClick={() => setPagina(pagina - 1)}>
+        Anterior
+      </button>
+    </li>
+
+    {[...Array(totalPaginas)].map((_, i) => {
+      const pageNumber = i + 1;
+      return (
+        <li
+          key={pageNumber}
+          className={`page-item ${pageNumber === pagina ? "active" : ""}`}
+        >
+          <button className="page-link" onClick={() => setPagina(pageNumber)}>
+            {pageNumber}
+          </button>
+        </li>
+      );
+    }).slice(Math.max(pagina - 1, 0), pagina + 1)} {/* Solo muestra 2 páginas: actual y siguiente */}
+
+    <li className={`page-item ${pagina === totalPaginas ? "disabled" : ""}`}>
+      <button className="page-link" onClick={() => setPagina(pagina + 1)}>
+        Siguiente
+      </button>
+    </li>
+    <li className={`page-item ${pagina === totalPaginas ? "disabled" : ""}`}>
+      <button className="page-link" onClick={() => setPagina(totalPaginas)}>
+        Fin
+      </button>
+    </li>
+  </ul>
+
+  <span className="ms-3">
+    Página {pagina} de {totalPaginas} ({totalAsistentes} asistentes en total)
+  </span>
+</nav>
+
 
         {/* Aquí puedes poner paginación si necesitas */}
       </div>
