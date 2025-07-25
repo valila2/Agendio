@@ -7,11 +7,13 @@ import {
   obtenerEventoPorId,
   actualizarEvento,
   eliminarEvento,
-  pruebaRegistro
+  pruebaRegistro,
+  obtenerEventosPorTrabajador
 } from '../controllers/evento.controller.js';
 import { verificarToken } from '../middlewares/auth.js'; 
 const router = Router();
 
+router.get("/eventos/trabajador/:trabajadorId", obtenerEventosPorTrabajador);
 router.post('/eventos/', verificarToken, crearEvento);
 router.get('/eventos/', verificarToken, obtenerEventos);
 router.get('/eventos/:id', obtenerEventoPorId);

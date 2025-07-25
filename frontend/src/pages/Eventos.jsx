@@ -8,6 +8,7 @@ import {
   crearEvento,
   actualizarEvento,
   eliminarEvento,
+  obtenerEventosPorTrabajador,
 } from "../services/eventosServices";
 import Navbar from "../components/shared/Navbar";
 import { toast } from "react-toastify";
@@ -46,6 +47,13 @@ const Eventos = () => {
   const [idAEliminar, setIdAEliminar] = useState(null);
   const [eventoParaVer, setEventoParaVer] = useState(null);
   const [eventoParaAsignar, setEventoParaAsignar] = useState(null);
+
+  const getUsuarioLogueado = () => {
+    const storedUser = localStorage.getItem("usuario");
+    return storedUser ? JSON.parse(storedUser) : null;
+  };
+
+  const usuario = getUsuarioLogueado();
 
   const obtenerTrabajadores = async () => {
     try {
@@ -102,14 +110,29 @@ const Eventos = () => {
 
   const cargarEventos = async (pagina = 1) => {
     try {
-      const data = await obtenerEventos(pagina, eventosPorPagina, fechaFiltro);
+      const usuario = getUsuarioLogueado();
+
+      let data;
+
+      if (usuario.rol === "admin") {
+        data = await obtenerEventos(pagina, eventosPorPagina, fechaFiltro);
+      } else if (usuario.rol === "trabajador") {
+        data = await obtenerEventosPorTrabajador(
+          usuario.id,
+          pagina,
+          eventosPorPagina,
+          fechaFiltro
+        );
+      }
+
       const eventosFormateados = data.eventos.map((ev) => ({
         ...ev,
         id: ev._id,
       }));
+
       setEventos(eventosFormateados);
       setTotalPaginas(data.totalPages);
-      setTotalEventos(data.totalEventos); // Asegúrate de que el backend lo devuelva
+      setTotalEventos(data.totalEventos);
     } catch (error) {
       console.error("Error al cargar eventos:", error);
     }
@@ -261,29 +284,31 @@ const Eventos = () => {
             </div>
           </div>
         </div>
-        <div className=" d-flex align-items-end justify-content-end">
-          <button
-            className="btn btn-success mb-3"
-            onClick={() => {
-              setForm({
-                id: null,
-                nombre: "",
-                fecha: "",
-                lugar: "",
-                descripcion: "",
-                valor: "",
-              });
-              setEditing(false);
+        {usuario.rol == "admin" && (
+          <div className=" d-flex align-items-end justify-content-end">
+            <button
+              className="btn btn-success mb-3"
+              onClick={() => {
+                setForm({
+                  id: null,
+                  nombre: "",
+                  fecha: "",
+                  lugar: "",
+                  descripcion: "",
+                  valor: "",
+                });
+                setEditing(false);
 
-              const modal = new bootstrap.Modal(
-                document.getElementById("modalEvento")
-              );
-              modal.show();
-            }}
-          >
-            Crear Evento
-          </button>
-        </div>
+                const modal = new bootstrap.Modal(
+                  document.getElementById("modalEvento")
+                );
+                modal.show();
+              }}
+            >
+              Crear Evento
+            </button>
+          </div>
+        )}
 
         {eventos.length === 0 ? (
           <p>No hay eventos registrados.</p>
@@ -317,24 +342,28 @@ const Eventos = () => {
                     >
                       Ver
                     </button>
-                    <button
-                      className="btn btn-sm btn-warning me-2"
-                      onClick={() => handleEdit(ev)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="btn btn-sm btn-secondary me-2"
-                      onClick={() => abrirModalAsignar(ev)}
-                    >
-                      Trabajador(es)
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => confirmarEliminacion(ev.id)}
-                    >
-                      Eliminar
-                    </button>
+                    {usuario.rol === "admin" && (
+                      <>
+                        <button
+                          className="btn btn-sm btn-warning me-2"
+                          onClick={() => handleEdit(ev)}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="btn btn-sm btn-secondary me-2"
+                          onClick={() => abrirModalAsignar(ev)}
+                        >
+                          Trabajador(es)
+                        </button>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => confirmarEliminacion(ev.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -54,3 +54,26 @@ export const eliminarEvento = async (id) => {
   });
   return response.data;
 };
+
+export const obtenerEventosPorTrabajador = async (
+  trabajadorId,
+  page = 1,
+  limit = 10,
+  fecha = ""
+) => {
+  const response = await axios.get(
+    `${API_URL}/eventos/trabajador/${trabajadorId}`,
+    {
+      params: {
+        page,
+        limit,
+        fecha,
+      },
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+
+  return response.data;
+};
