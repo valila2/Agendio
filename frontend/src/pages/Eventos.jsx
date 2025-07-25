@@ -25,7 +25,7 @@ const Eventos = () => {
   const [eventos, setEventos] = useState([]);
   const [paginaActual, setPaginaActual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [eventosPorPagina, setEventosPorPagina] = useState(10);
+  const [eventosPorPagina, setEventosPorPagina] = useState(5);
   const [totalEventos, setTotalEventos] = useState(0);
   const [fechaFiltro, setFechaFiltro] = useState("");
 
@@ -262,11 +262,11 @@ const Eventos = () => {
                   setPaginaActual(1);
                 }}
               >
+                <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={30}>30</option>
                 <option value={40}>40</option>
-                <option value={50}>50</option>
               </select>
             </div>
           </div>
