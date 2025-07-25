@@ -156,16 +156,6 @@ const Eventos = () => {
           bootstrap.Modal.getInstance(modalElement) ||
           new bootstrap.Modal(modalElement);
         modalInstance.hide();
-
-        // Forzar limpieza del fondo oscuro
-        setTimeout(() => {
-          document
-            .querySelectorAll(".modal-backdrop")
-            .forEach((el) => el.remove());
-          document.body.classList.remove("modal-open");
-          document.body.style.overflow = "";
-          document.body.style.paddingRight = "";
-        }, 300);
       };
 
       cerrarModalYLimpiar("modalEvento");
@@ -274,8 +264,6 @@ const Eventos = () => {
         <div className=" d-flex align-items-end justify-content-end">
           <button
             className="btn btn-success mb-3"
-            data-bs-toggle="modal"
-            data-bs-target="#modalEvento"
             onClick={() => {
               setForm({
                 id: null,
@@ -286,6 +274,11 @@ const Eventos = () => {
                 valor: "",
               });
               setEditing(false);
+
+              const modal = new bootstrap.Modal(
+                document.getElementById("modalEvento")
+              );
+              modal.show();
             }}
           >
             Crear Evento
