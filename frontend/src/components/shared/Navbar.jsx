@@ -1,16 +1,35 @@
 // src/components/Navbar.jsx
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { jwtDecode } from "jwt-decode";
 
-function Navbar({ rol }) {
+function Navbar() {
   const navigate = useNavigate();
+  const [rol, setRol] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        setRol(decoded.rol);
+      } catch (error) {
+        toast.error("Token inválido");
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    } else {
+      toast.error("No autorizado");
+      navigate("/login");
+    }
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     toast.success("Sesión cerrada");
-    navigate("/");
+    navigate("/login");
   };
 
   return (

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { login } from "../services/authServices.js";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { toast } from 'react-toastify';
-
+import { toast } from "react-toastify";
 
 import "../styles/login.css";
 
@@ -12,7 +11,6 @@ function Login() {
   const [contrasena, setContrasena] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -25,12 +23,12 @@ function Login() {
     try {
       const data = await login(correo, contrasena);
       localStorage.setItem("token", data.token);
-      toast.success('Inicio de sesión exitoso');
+      toast.success("Inicio de sesión exitoso");
 
       const datos = jwtDecode(data.token);
-      console.log("datos", datos)
-       navigate("/home");
-       
+      localStorage.setItem("usuario", JSON.stringify(datos));
+
+      navigate("/home");
     } catch (err) {
       const mensaje =
         err.response?.data?.mensaje || "Error desconocido al iniciar sesión";

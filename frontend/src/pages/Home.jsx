@@ -28,9 +28,9 @@ function Home() {
   }, [navigate]);
 
   return (
-    <div className="min-vh-100" style={{ backgroundColor: "#e6e6fa" }}>
+    <div className="fondo" >
       {/* Navbar reutilizable */}
-      <Navbar rol={rol} />
+      <Navbar/>
 
       {/* Tarjetas */}
       <div className="container py-5">
